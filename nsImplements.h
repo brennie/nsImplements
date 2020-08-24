@@ -7,6 +7,11 @@
 #include "nsISupports.h"
 #include "nsresult.h"
 
+namespace implements_traits {
+  template<typename T>
+  struct nsTearOff;
+}
+
 inline namespace {
   template<typename Derived, typename... Ts>
   struct QueryInterfaceImpl;
@@ -47,13 +52,33 @@ inline namespace {
       return nullptr;
     }
   };
+
+  template<typename... Bases>
+  class nsImplements_Bases;
+
+  template<typename Base, typename... Bases>
+  class nsImplements_Bases<implements_traits::nsTearOff<Base>, Bases...> : public nsImplements_Bases<Bases...> {
+    static_assert(
+      std::is_base_of_v<nsISupports, Base>,
+      "base does not inherit from nsISupports"
+    );
+  };
+
+  template<typename Base, typename... Bases>
+  class nsImplements_Bases<Base, Bases...> : public Base
+                                           , public nsImplements_Bases<Bases...> {
+    static_assert(
+      std::is_base_of_v<nsISupports, Base>,
+      "base does not inherit from nsISupports"
+    );
+  };
+
+  template<>
+  class nsImplements_Bases<> {};
 }
 
 template<typename Derived, RefCountKind refCountKind, typename... Bases>
 class nsImplements : public Bases... {
-//  static_assert(
-//    std::is_base_of_v<nsISupports, Bases...>,
-//    "does not inherit from nsISupports");
 
  public:
   virtual intptr_t AddRef() override {
