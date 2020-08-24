@@ -14,7 +14,10 @@ int main() {
   nsCOMPtr<nsIBar> bar{reinterpret_cast<nsIBar *>(qi)};
   bar->Corge();
 
-  // nsCOMPtr<nsIBar> bar{ static_cast<nsIBar*>(foo.get()) };
-  // bar->Corge();
+  qi = nullptr;
+  rv = foo->QueryInterface(nsITornOff::INTERFACE_ID, &qi);
+  nsCOMPtr<nsITornOff> tornOff{reinterpret_cast<nsITornOff *>(qi)};
+  tornOff->Quux();
+
   return 0;
 }

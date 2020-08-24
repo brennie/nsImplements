@@ -9,7 +9,7 @@
 
 namespace implements_traits {
   template<typename T>
-  struct TearOff;
+  struct TearOff {};
 }
 
 inline namespace {
@@ -38,6 +38,15 @@ inline namespace {
   template<typename Derived, typename T, typename... Ts>
   struct QueryInterfaceImpl<Derived, implements_traits::TearOff<T>, Ts...> {
     nsISupports* operator()(void *that, const nsID& uuid) {
+      std::cerr << "Comparing T::INTERFACE_ID (" << T::INTERFACE_ID << ") vs desired " << uuid << std::endl;
+      if (T::INTERFACE_ID == uuid) {
+        Derived* derived = reinterpret_cast<Derived*>(that);
+        nsISupports* supports = derived->template TearOff<T>();
+        if (supports) {
+          return supports;
+        }
+      }
+
       return QueryInterfaceImpl<Derived, Ts...>()(that, uuid);
     }
   };
