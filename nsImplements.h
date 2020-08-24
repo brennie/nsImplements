@@ -9,45 +9,43 @@
 
 namespace implements_traits {
   template<typename T>
-  struct nsTearOff;
+  struct TearOff;
 }
 
 inline namespace {
   template<typename Derived, typename... Ts>
   struct QueryInterfaceImpl;
 
-  template<typename Derived, typename T, typename...Ts>
+  template<typename Derived, typename T, typename... Ts>
   struct QueryInterfaceImpl<Derived, T, Ts...> {
-    void* mThat;
-    const nsID& mUUID;
-
-    QueryInterfaceImpl(void* that, const nsID& uuid)
-        : mThat(that)
-        , mUUID(uuid) {}
-
-    nsISupports* operator()() {
-      std::cerr << "Comparing T::INTERFACE_ID (" << T::INTERFACE_ID << ") vs desired " << mUUID << std::endl;
-      if (T::INTERFACE_ID == mUUID) {
+    nsISupports* operator()(void* that, const nsID& uuid) {
+      std::cerr << "Comparing T::INTERFACE_ID (" << T::INTERFACE_ID << ") vs desired " << uuid << std::endl;
+      if (T::INTERFACE_ID == uuid) {
         ptrdiff_t offset = (
           reinterpret_cast<char*>(static_cast<T*>((Derived*)0x1000)) -
           reinterpret_cast<char*>((Derived*)0x1000)
         );
 
         return reinterpret_cast<nsISupports*>(
-          reinterpret_cast<char*>(mThat) + offset
+          reinterpret_cast<char*>(that) + offset
         );
       }
 
-      return QueryInterfaceImpl<Derived, Ts...>(mThat, mUUID)();
+      return QueryInterfaceImpl<Derived, Ts...>()(that, uuid);
     }
+  };
 
+  template<typename Derived, typename T, typename... Ts>
+  struct QueryInterfaceImpl<Derived, implements_traits::TearOff<T>, Ts...> {
+    nsISupports* operator()(void *that, const nsID& uuid) {
+      return QueryInterfaceImpl<Derived, Ts...>()(that, uuid);
+    }
   };
 
   template<typename Derived>
   struct QueryInterfaceImpl<Derived> {
-    QueryInterfaceImpl(void*, const nsID&) {}
 
-    nsISupports* operator()() {
+    nsISupports* operator()(void*, const nsID&) {
       std::cerr << "Does not implement interface\n";
       return nullptr;
     }
@@ -57,7 +55,7 @@ inline namespace {
   class nsImplements_Bases;
 
   template<typename Base, typename... Bases>
-  class nsImplements_Bases<implements_traits::nsTearOff<Base>, Bases...> : public nsImplements_Bases<Bases...> {
+  class nsImplements_Bases<implements_traits::TearOff<Base>, Bases...> : public nsImplements_Bases<Bases...> {
     static_assert(
       std::is_base_of_v<nsISupports, Base>,
       "base does not inherit from nsISupports"
@@ -94,7 +92,7 @@ class nsImplements : public Bases... {
   }
 
   virtual nsresult QueryInterface(const nsID& uuid, void** result) override {
-    nsISupports* supports = QueryInterfaceImpl<Derived, Bases...>(this, uuid)();
+    nsISupports* supports = QueryInterfaceImpl<Derived, Bases...>()(this, uuid);
     *result = supports;
 
     if (supports) {
