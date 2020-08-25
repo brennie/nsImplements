@@ -7,30 +7,22 @@
 #include "nsIFoo.h"
 
 int main() {
-  nsCOMPtr<ConcreteFooBar> concrete { new ConcreteFooBar() };
+  nsCOMPtr<ConcreteFooBar> concrete{new ConcreteFooBar()};
 
-  nsCOMPtr<nsIFoo> foo{ concrete.get() };
+  nsCOMPtr<nsIFoo> foo{concrete.get()};
   foo->Frobnicate();
 
-  void* qi = nullptr;
-  nsresult rv = foo->QueryInterface(nsIBar::INTERFACE_ID, &qi);
-
-  nsCOMPtr<nsIBar> bar{reinterpret_cast<nsIBar *>(qi)};
+  nsCOMPtr<nsIBar> bar = do_QueryInterface(foo.get());
   bar->Corge();
 
-  qi = nullptr;
-  rv = foo->QueryInterface(nsITornOff::INTERFACE_ID, &qi);
-  nsCOMPtr<nsITornOff> tornOff{reinterpret_cast<nsITornOff *>(qi)};
+  nsCOMPtr<nsITornOff> tornOff = do_QueryInterface(foo.get());
   tornOff->Quux();
 
-  qi = nullptr;
-  rv = foo->QueryInterface(nsIBaz::INTERFACE_ID, &qi);
-  NS_ASSERT(qi == nullptr, "qi should be null");
+  nsCOMPtr<nsIBaz> baz = do_QueryInterface(foo.get());
+  NS_ASSERT(!baz, "baz should be null");
 
   concrete->SetIsBaz(true);
-  qi = nullptr;
-  rv = foo->QueryInterface(nsIBaz::INTERFACE_ID, &qi);
-  nsCOMPtr<nsIBaz> baz{reinterpret_cast<nsIBaz *>(qi)};
+  baz = do_QueryInterface(foo.get());
   baz->Grault();
 
   return 0;

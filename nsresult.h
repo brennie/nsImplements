@@ -11,4 +11,6 @@ enum class nsresult : uint32_t {
 #define NS_ERROR_NO_INTERFACE nsresult::NS_ERROR_NO_INTERFACE
 #define NS_ERROR_NULL_POINTER nsresult::NS_ERROR_NULL_POINTER
 
-#endif  // NSRESULT_H
+constexpr bool NS_FAILED(nsresult rv) { return rv != NS_OK; }
+
+#endif // NSRESULT_H
