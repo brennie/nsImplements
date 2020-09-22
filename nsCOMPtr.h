@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <type_traits>
 
+#include "nsISupports.h"
+
 #define NS_ASSERT(cond, msg)                                                   \
   do {                                                                         \
     if (!(cond)) {                                                             \
